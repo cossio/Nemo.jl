@@ -174,7 +174,7 @@ include("flint/nmod.jl")
 
 include("flint/fmpz_mod_poly.jl")
 
-#include("flint/fmpz_mpoly.jl")
+include("flint/fmpz_mpoly.jl")
 
 include("flint/fmpz_rel_series.jl")
 

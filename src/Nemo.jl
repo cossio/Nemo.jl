@@ -102,20 +102,20 @@ function __init__()
       push!(Libdl.DL_LOAD_PATH, libdir)
    end
 
-   if !is_windows()
-      ccall((:__gmp_set_memory_functions, libgmp), Void,
-         (Ptr{Void},Ptr{Void},Ptr{Void}),
-         cglobal(:jl_gc_counted_malloc),
-         cglobal(:jl_gc_counted_realloc_with_old_size),
-         cglobal(:jl_gc_counted_free))
-
-      ccall((:__flint_set_memory_functions, libflint), Void,
-         (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void}),
-         cglobal(:jl_malloc),
-         cglobal(:jl_calloc),
-         cglobal(:jl_realloc),
-         cglobal(:jl_free))
-   end
+#   if !is_windows()
+#      ccall((:__gmp_set_memory_functions, libgmp), Void,
+#         (Ptr{Void},Ptr{Void},Ptr{Void}),
+#         cglobal(:jl_gc_counted_malloc),
+#         cglobal(:jl_gc_counted_realloc_with_old_size),
+#         cglobal(:jl_gc_counted_free))
+#
+#      ccall((:__flint_set_memory_functions, libflint), Void,
+#         (Ptr{Void},Ptr{Void},Ptr{Void},Ptr{Void}),
+#         cglobal(:jl_malloc),
+#         cglobal(:jl_calloc),
+#         cglobal(:jl_realloc),
+#         cglobal(:jl_free))
+#   end
 
    ccall((:flint_set_abort, libflint), Void,
       (Ptr{Void},), cfunction(flint_abort, Void, ()))

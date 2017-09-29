@@ -170,6 +170,14 @@ function mul_array{S, N}(a::fmpz_mpoly{S, N}, b::fmpz_mpoly{S, N})
    return z
 end
 
+function mul_heap_threaded{S, N}(a::fmpz_mpoly{S, N}, b::fmpz_mpoly{S, N})
+   z = parent(a)()
+   ccall((:fmpz_mpoly_mul_heap_threaded, :libflint), Void,
+       (Ptr{fmpz_mpoly}, Ptr{fmpz_mpoly}, Ptr{fmpz_mpoly}, Ptr{FmpzMPolyRing}),
+       &z, &a, &b, &a.parent)
+   return z
+end
+
 ###############################################################################
 #
 #   Ad hoc arithmetic
