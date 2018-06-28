@@ -437,7 +437,7 @@ function test_acb_lindep()
 
    @test Phi == x^2*y+16*x-y^2
 
-   A2 = modweber_f1(tau1)^8; B2 = modweber_f1(2*tau1)^8
+   A2 = modweber_f1(tau2)^8; B2 = modweber_f1(2*tau2)^8
    vals2 = [A2^i*B2^j for i in 0:2 for j in 0:2]
 
    vals = [vals1 vals2]'
