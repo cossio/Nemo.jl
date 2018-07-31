@@ -101,6 +101,13 @@ parent_type(::Type{padic}) = FlintPadicField
 #
 ###############################################################################
 
+function Base.deepcopy_internal(a::padic, dict::ObjectIdDict)
+   z = parent(a)()
+   ccall((:padic_set, :libflint), Void,
+         (Ref{padic}, Ref{padic}, Ref{FlintPadicField}), z, a, parent(a))
+   return z
+end
+
 function Base.hash(a::padic, h::UInt)
    return xor(hash(lift(FlintQQ, a), h), xor(hash(prime(parent(a)), h), h))
 end
@@ -466,7 +473,12 @@ doc"""
 > such a value exists. If not, the value of $h$ is undetermined.
 """
 function divides(a::padic, b::padic)
-   iszero(b) && throw(DivideError())
+   if iszero(a)
+      return true, zero(parent(a))
+   end
+   if iszero(b)
+      return false, zero(parent(a))
+   end
    return true, divexact(a, b)
 end
 

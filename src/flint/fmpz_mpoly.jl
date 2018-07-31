@@ -16,7 +16,7 @@ parent_type{S, N}(::Type{fmpz_mpoly{S, N}}) = FmpzMPolyRing{S, N}
 
 elem_type{S, N}(::FmpzMPolyRing{S, N}) = fmpz_mpoly{S, N}
 
-vars(a::FmpzMPolyRing) = a.S
+symbols(a::FmpzMPolyRing) = a.S
 
 function gens{S, N}(R::FmpzMPolyRing{S, N})
    A = Array{fmpz_mpoly{S, N}}(R.num_vars)
@@ -98,7 +98,7 @@ function show(io::IO, x::fmpz_mpoly)
    else
       cstr = ccall((:fmpz_mpoly_get_str_pretty, :libflint), Ptr{UInt8}, 
           (Ref{fmpz_mpoly}, Ptr{Ptr{UInt8}}, Ref{FmpzMPolyRing}), 
-          x, [string(s) for s in vars(parent(x))], x.parent)
+          x, [string(s) for s in symbols(parent(x))], x.parent)
       print(io, unsafe_string(cstr))
 
       ccall((:flint_free, :libflint), Void, (Ptr{UInt8},), cstr)
@@ -296,6 +296,12 @@ end
 ###############################################################################
 
 function divides_array{S, N}(a::fmpz_mpoly{S, N}, b::fmpz_mpoly{S, N})
+   if iszero(a)
+      return true, zero(parent(a))
+   end
+   if iszero(b)
+      return false, zero(parent(a))
+   end
    z = parent(a)()
    d = ccall((:fmpz_mpoly_divides_array, :libflint), Cint, 
        (Ref{fmpz_mpoly}, Ref{fmpz_mpoly}, Ref{fmpz_mpoly}, Ref{FmpzMPolyRing}),
@@ -305,6 +311,12 @@ function divides_array{S, N}(a::fmpz_mpoly{S, N}, b::fmpz_mpoly{S, N})
 end
 
 function divides_monagan_pearce{S, N}(a::fmpz_mpoly{S, N}, b::fmpz_mpoly{S, N})
+   if iszero(a)
+      return true, zero(parent(a))
+   end
+   if iszero(b)
+      return false, zero(parent(a))
+   end
    z = parent(a)()
    d = Bool(ccall((:fmpz_mpoly_divides_monagan_pearce, :libflint), Cint, 
        (Ref{fmpz_mpoly}, Ref{fmpz_mpoly}, Ref{fmpz_mpoly}, Ref{FmpzMPolyRing}),

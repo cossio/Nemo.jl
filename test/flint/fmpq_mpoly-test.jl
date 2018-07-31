@@ -26,7 +26,7 @@ function test_fmpq_mpoly_constructors()
 
       @test typeof(S) <: FmpqMPolyRing
 
-      isa(vars(S), Array{Symbol, 1})
+      isa(symbols(S), Array{Symbol, 1})
 
       for j = 1:num_vars
          @test isa(varlist[j], fmpq_mpoly)
@@ -92,7 +92,9 @@ function test_fmpq_mpoly_manipulation()
 
       f = rand(S, 1:5, 0:100, -100:100)
 
-      @test f == sum((coeff(f, i) * S(fmpq[1], [Nemo._get_termexp_fmpz(f, i)])  for i in 1:length(f)))
+      if length(f) > 0
+        @test f == sum((coeff(f, i) * S(fmpq[1], [Nemo._get_termexp_fmpz(f, i)])  for i in 1:length(f)))
+      end
 
       deg = isdegree(ordering(S))
       rev = isreverse(ordering(S))
@@ -287,22 +289,21 @@ function test_fmpq_mpoly_divides()
       S, varlist = PolynomialRing(R, var_names, ordering = ord)
 
       for iter = 1:10
-         f = S(0)
-         while iszero(f)
-            f = rand(S, 0:5, 0:100, -100:100)
-         end
+         f = rand(S, 0:5, 0:100, -100:100)
          g = rand(S, 0:5, 0:100, -100:100)
 
          p = f*g
 
          flag, q = divides(p, f)
 
-         @test flag == true
-         @test q == g
+         if flag 
+           @test q * f == p
+         end
 
-         q = divexact(p, f)
-
-         @test q == g
+         if !iszero(f)
+           q = divexact(p, f)
+           @test q == g
+         end
       end
    end
 

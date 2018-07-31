@@ -4,7 +4,7 @@
 #
 ###############################################################################
 
-export FmpqMPolyRing, fmpq_mpoly, degrees
+export FmpqMPolyRing, fmpq_mpoly, degrees, symbols
 
 ###############################################################################
 #
@@ -18,7 +18,7 @@ elem_type(::Type{FmpqMPolyRing}) = fmpq_mpoly
 
 elem_type(::FmpqMPolyRing) = fmpq_mpoly
 
-vars(a::FmpqMPolyRing) = a.S
+symbols(a::FmpqMPolyRing) = a.S
 
 parent(a::fmpq_mpoly) = a.parent
 
@@ -211,7 +211,7 @@ function show(io::IO, x::fmpq_mpoly)
    else
       cstr = ccall((:fmpq_mpoly_get_str_pretty, :libflint), Ptr{UInt8},
           (Ref{fmpq_mpoly}, Ptr{Ptr{UInt8}}, Ref{FmpqMPolyRing}),
-          x, [string(s) for s in vars(parent(x))], x.parent)
+          x, [string(s) for s in symbols(parent(x))], x.parent)
       print(io, unsafe_string(cstr))
 
       ccall((:flint_free, :libflint), Void, (Ptr{UInt8},), cstr)
@@ -449,7 +449,12 @@ end
 
 function divides(a::fmpq_mpoly, b::fmpq_mpoly)
    check_parent(a, b)
-   iszero(b) && error("Cannot divide by zero")
+   if iszero(a)
+      return true, zero(parent(a))
+   end
+   if iszero(b)
+      return false, zero(parent(a))
+   end
    z = parent(a)()
    d = ccall((:fmpq_mpoly_divides, :libflint), Cint,
        (Ref{fmpq_mpoly}, Ref{fmpq_mpoly}, Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}),
@@ -555,7 +560,7 @@ function mul!(a::fmpq_mpoly, b::fmpq_mpoly, c::fmpq_mpoly)
 end
 
 function setcoeff!(a::fmpq_mpoly, i::Int, c::fmpq)
-   ccall((:fmpq_mpoly_set_coeff_fmpq, :libflint), Void,
+   ccall((:fmpq_mpoly_set_termcoeff_fmpq, :libflint), Void,
          (Ref{fmpq_mpoly}, Int, Ref{fmpq}, Ref{FmpqMPolyRing}),
          a, i - 1, c, a.parent)
    return a
