@@ -4,7 +4,12 @@
 #
 ###############################################################################
 
-export FmpqMPolyRing, fmpq_mpoly, degrees, symbols
+export FmpqMPolyRing, fmpq_mpoly, degrees, symbols, degree_fmpz,
+       degrees_fit_int, degrees_fmpz, total_degree_fits_int, total_degree_fmpz,
+       combine_like_terms!, sort_terms!, exponent_vector_fits_ui,
+       exponent_vector_fits_int, exponent_vector, exponent_vector_fmpz,
+       exponent_vectors, exponent_vectors_fmpz, set_exponent_vector!,
+       sort_terms!
 
 ###############################################################################
 #
@@ -114,6 +119,10 @@ function iszero(a::fmpq_mpoly)
 end
 
 function ismonomial(a::fmpq_mpoly)
+   return length(a) == 1 && coeff(a, 1) == 1
+end
+
+function isterm(a::fmpq_mpoly)
    return length(a) == 1
 end
 
@@ -219,7 +228,7 @@ function total_degree(a::fmpq_mpoly)
 end
 
 # total degree as an fmpz
-function degree_fmpz(a::fmpq_mpoly, i::Int)
+function total_degree_fmpz(a::fmpq_mpoly)
    d = fmpz()
    ccall((:fmpq_mpoly_totaldegree_fmpz, :libflint), Nothing,
          (Ref{fmpz}, Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}),
@@ -587,7 +596,8 @@ function mul!(a::fmpq_mpoly, b::fmpq_mpoly, c::fmpq_mpoly)
    return a
 end
 
-# TODO: check zero is handled correctly
+# Set the i-th coefficient of a to c. If zero coefficients are inserted, they
+# must be removed with combine_like_terms!
 function setcoeff!(a::fmpq_mpoly, i::Int, c::fmpq)
    ccall((:fmpq_mpoly_set_termcoeff_fmpq, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Int, Ref{fmpq}, Ref{FmpqMPolyRing}),
@@ -595,13 +605,27 @@ function setcoeff!(a::fmpq_mpoly, i::Int, c::fmpq)
    return a
 end
 
+# Set the i-th coefficient of a to c. If zero coefficients are inserted, they
+# must be removed with combine_like_terms!
 setcoeff!(a::fmpq_mpoly, i::Int, c::fmpz) = setcoeff!(a, i, fmpq(c))
 
+# Set the i-th coefficient of a to c. If zero coefficients are inserted, they
+# must be removed with combine_like_terms!
 setcoeff!(a::fmpq_mpoly, i::Int, c::Integer) = setcoeff!(a, i, fmpq(c))
 
+# Set the i-th coefficient of a to c. If zero coefficients are inserted, they
+# must be removed with combine_like_terms!
 setcoeff!(a::fmpq_mpoly, i::Int, c::Rational{<:Integer}) =
-         setcoeff!(a, i, fmpq(c))
+   setcoeff!(a, i, fmpq(c))
 
+# Remove zero terms and combine adjacent terms if they have the same monomial
+# no sorting is performed
+function combine_like_terms!(a::fmpq_mpoly)
+   ccall((:fmpq_mpoly_combine_like_terms, :libflint), Nothing,
+         (Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}), a, a.parent)
+   return a
+end    
+   
 ###############################################################################
 #
 #   Manipulating terms and monomials
@@ -657,11 +681,16 @@ end
 function exponent_vectors(a::fmpq_mpoly)
    return [exponent_vector(a, i) for i in 1:length(a)]
 end
-
+   
+# Return an array of exponent vectors, one for each term in the $a$
+function exponent_vectors_fmpz(a::fmpq_mpoly)
+   return [exponent_vector_fmpz(a, i) for i in 1:length(a)]
+end
+   
 # Set exponent of i-th term to given vector of UInt's
 # No sort is performed, so this is unsafe. These are promoted to fmpz's if
 # they don't fit into 31/63 bits
-function set_exponent_vector_ui!(a::fmpq_mpoly, i::Int, exps::Vector{UInt})
+function set_exponent_vector!(a::fmpq_mpoly, i::Int, exps::Vector{UInt})
    ccall((:fmpq_mpoly_set_termexp_ui, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
       a, i - 1, exps, parent(a))
@@ -680,7 +709,7 @@ end
    
 # Set exponent of i-th term to given vector of fmpz's
 # No sort is performed, so this is unsafe
-function set_exponent_vector_fmpz!(a::fmpq_mpoly, i::Int, exps::Vector{fmpz})
+function set_exponent_vector!(a::fmpq_mpoly, i::Int, exps::Vector{fmpz})
    ccall((:fmpq_mpoly_set_termexp_fmpz, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Int, Ptr{Ref{fmpz}}, Ref{FmpqMPolyRing}),
       a, i - 1, exps, parent(a))
@@ -697,14 +726,58 @@ function coeff(a::fmpq_mpoly, exps::Vector{UInt})
    return z
 end
 
+# Return the coefficient of the term with the given exponent vector
+# Return zero if there is no such term
+function coeff(a::fmpq_mpoly, exps::Vector{Int})
+   z = fmpq()
+   ccall((:fmpq_mpoly_get_coeff_fmpq_ui, :libflint), Nothing,
+         (Ref{fmpq}, Ref{fmpq_mpoly}, Ptr{Int}, Ref{FmpqMPolyRing}),
+      z, a, exps, parent(a))
+   return z
+end
+   
 # Set the coefficient of the term with the given exponent vector to the
-# given fmpq 
-function set_coeff!(a::fmpq_mpoly, exps::Vector{UInt}, b::fmpq)
+# given fmpq. Removal of a zero term is performed.
+function setcoeff!(a::fmpq_mpoly, exps::Vector{UInt}, b::fmpq)
    ccall((:fmpq_mpoly_set_coeff_fmpq_ui, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Ref{fmpq}, Ptr{UInt}, Ref{FmpqMPolyRing}),
       a, b, exps, parent(a))
    return a
 end
+
+# Set the coefficient of the term with the given exponent vector to the
+# given fmpq. Removal of a zero term is performed.
+function setcoeff!(a::fmpq_mpoly, exps::Vector{Int}, b::fmpq)
+   ccall((:fmpq_mpoly_set_coeff_fmpq_ui, :libflint), Nothing,
+         (Ref{fmpq_mpoly}, Ref{fmpq}, Ptr{Int}, Ref{FmpqMPolyRing}),
+      a, b, exps, parent(a))
+   return a
+end
+
+# Set the coefficient of the term with the given exponent vector to the
+# given integer. Removal of a zero term is performed.
+setcoeff!(a::fmpq_mpoly, exps::Vector{Int}, b::Rational{<:Integer}) =
+   setcoeff!(a, exps, fmpq(b))
+
+# Set the coefficient of the term with the given exponent vector to the
+# given fmpz. Removal of a zero term is performed.
+setcoeff!(a::fmpq_mpoly, exps::Vector{Int}, b::fmpz) = 
+   setcoeff!(a, exps, fmpq(b))
+
+# Set the coefficient of the term with the given exponent vector to the
+# given integer. Removal of a zero term is performed.
+setcoeff!(a::fmpq_mpoly, exps::Vector{Int}, b::Integer) =
+   setcoeff!(a, exps, fmpq(b))
+   
+# Sort the terms according to the ordering. This is only needed if unsafe
+# functions such as those above have been called and terms have been inserted
+# out of order. Note that like terms are not combined and zeros are not
+# removed. For that, call combine_like_terms!
+function sort_terms!(a::fmpq_mpoly)
+   ccall((:fmpq_mpoly_sort_terms, :libflint), Nothing,
+         (Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}), a, a.parent)
+   return a
+end    
 
 ###############################################################################
 #
