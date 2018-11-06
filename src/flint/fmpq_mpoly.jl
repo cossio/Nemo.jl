@@ -164,7 +164,7 @@ end
 #
 ###############################################################################
 
-# degree in the i-th variable as an Int
+# Degree in the i-th variable as an Int
 function degree(a::fmpq_mpoly, i::Int)
    n = nvars(parent(a))
    (i <= 0 || i > n) && error("Index must be between 1 and $n")
@@ -173,7 +173,7 @@ function degree(a::fmpq_mpoly, i::Int)
    return d
 end
 
-# degree in the i-th variable as an fmpz
+# Degree in the i-th variable as an fmpz
 function degree_fmpz(a::fmpq_mpoly, i::Int)
    n = nvars(parent(a))
    (i <= 0 || i > n) && error("Index must be between 1 and $n")
@@ -184,14 +184,14 @@ function degree_fmpz(a::fmpq_mpoly, i::Int)
    return d
 end
 
-# return true if degrees fit into an Int
+# Return true if degrees fit into an Int
 function degrees_fit_int(a::fmpq_mpoly)
    b = ccall((:fmpq_mpoly_degrees_fit_si, :libflint), Cint,
              (Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}), a, a.parent)
    return Bool(b)
 end
 
-# return an array of the max degrees in each variable
+# Return an array of the max degrees in each variable
 function degrees(a::fmpq_mpoly)
    degs = Vector{Int}(undef, nvars(parent(a)))
    ccall((:fmpq_mpoly_degrees_si, :libflint), Nothing,
@@ -200,7 +200,7 @@ function degrees(a::fmpq_mpoly)
    return degs
 end
 
-# return an array of the max degrees as fmpzs in each variable
+# Return an array of the max degrees as fmpzs in each variable
 function degrees_fmpz(a::fmpq_mpoly)
    n = nvars(parent(a))
    degs = Vector{fmpz}(undef, n)
@@ -213,21 +213,21 @@ function degrees_fmpz(a::fmpq_mpoly)
    return degs
 end
 
-# return true if degree fits into an Int
+# Return true if degree fits into an Int
 function total_degree_fits_int(a::fmpq_mpoly)
       b = ccall((:fmpq_mpoly_totaldegree_fits_si, :libflint), Cint,
                 (Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}), a, a.parent)
       return Bool(b)
    end
    
-# total degree as an Int
+# Total degree as an Int
 function total_degree(a::fmpq_mpoly)
    d = ccall((:fmpq_mpoly_totaldegree_si, :libflint), Int,
              (Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}), a, a.parent)
    return d
 end
 
-# total degree as an fmpz
+# Total degree as an fmpz
 function total_degree_fmpz(a::fmpq_mpoly)
    d = fmpz()
    ccall((:fmpq_mpoly_totaldegree_fmpz, :libflint), Nothing,
