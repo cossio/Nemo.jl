@@ -126,6 +126,10 @@ function isterm(a::fmpq_mpoly)
    return length(a) == 1
 end
 
+function isunit(a::fmpq_mpoly)
+   return length(a) == 1 && total_degree(a) == 0 && isunit(coeff(a, 1))
+end
+
 function isconstant(a::fmpq_mpoly)
    b = ccall((:fmpq_mpoly_is_fmpq, :libflint), Cint,
              (Ref{fmpq_mpoly}, Ref{FmpqMPolyRing}), a, parent(a))
@@ -578,9 +582,47 @@ end
 
 ###############################################################################
 #
+#   Evaluation
+#
+###############################################################################
+
+function evaluate(a::fmpq_mpoly, b::Vector{fmpq})
+   length(b) != nvars(parent(a)) && error("Vector size incorrect in evaluate")
+   z = fmpq()
+   GC.@preserve b ccall((:fmpq_mpoly_evaluate_all_fmpq, :libflint), Nothing,
+         (Ref{fmpq}, Ref{fmpq_mpoly}, Ptr{fmpq}, Ref{FmpqMPolyRing}),
+            z, a, b, parent(a))
+   return z
+end
+
+function evaluate(a::fmpq_mpoly, b::Vector{fmpz})
+   fmpq_vec = [fmpq(s) for s in b]
+   return evaluate(a, fmpq_vec)
+end
+   
+function evaluate(a::fmpq_mpoly, b::Vector{<:Integer})
+   fmpq_vec = [fmpq(s) for s in b]
+   return evaluate(a, fmpq_vec)
+end
+   
+###############################################################################
+#
 #   Unsafe functions
 #
 ###############################################################################
+
+# Ensure space for n terms. Should only be required if setting coefficients or
+# terms in an unsafe manner beyond the current end of the polynomial.
+function fit!(a::fmpq_mpoly, n::Int)
+   if n > length(a)
+      for i = 1:n - length(a)
+         ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
+            (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
+         a, 0, UInt[0 for j in 1:nvars(parent(a))], a.parent)
+      end
+   end
+   return nothing
+end
 
 function addeq!(a::fmpq_mpoly, b::fmpq_mpoly)
    ccall((:fmpq_mpoly_add, :libflint), Nothing,
@@ -768,7 +810,7 @@ setcoeff!(a::fmpq_mpoly, exps::Vector{Int}, b::fmpz) =
 # given integer. Removal of a zero term is performed.
 setcoeff!(a::fmpq_mpoly, exps::Vector{Int}, b::Integer) =
    setcoeff!(a, exps, fmpq(b))
-   
+
 # Sort the terms according to the ordering. This is only needed if unsafe
 # functions such as those above have been called and terms have been inserted
 # out of order. Note that like terms are not combined and zeros are not
