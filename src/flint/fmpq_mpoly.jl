@@ -892,6 +892,18 @@ function (R::FmpqMPolyRing)(a::Vector{fmpq}, b::Vector{Vector{T}}) where {T <: U
 end
 
 # Create poly with given array of coefficients and array of exponent vectors (sorting is performed)
+function (R::FmpqMPolyRing)(a::Vector{fmpq}, b::Vector{Vector{Int}})
+   length(a) != length(b) && error("Coefficient and exponent vector must have the same length")
+   
+   for i in 1:length(b)
+      length(b[i]) != nvars(R) && error("Exponent vector $i has length $(length(b[i])) (expected $(nvars(R)))")
+   end
+   
+   z = fmpq_mpoly(R, a, b)
+   return z
+end
+      
+# Create poly with given array of coefficients and array of exponent vectors (sorting is performed)
 function (R::FmpqMPolyRing)(a::Vector{Any}, b::Vector{Vector{T}}) where T
    n = nvars(R)
    length(a) != length(b) && error("Coefficient and exponent vector must have the same length")
