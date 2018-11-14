@@ -602,7 +602,7 @@ function test_fmpq_mpoly_combine_like_terms()
 end
 
 function test_fmpq_mpoly_exponents()
-  print("Generic.fmpq_mpoly.exponents...")
+  print("fmpq_mpoly.exponents...")
 
   for num_vars = 1:10
      var_names = ["x$j" for j in 1:num_vars]
@@ -628,8 +628,6 @@ function test_fmpq_mpoly_exponents()
 
         f = R()
         rand_len = rand(0:10)
-
-        fit!(f, rand_len)
 
         for i = 1:rand_len
            f = set_exponent_vector!(f, i, [rand(0:10) for j in 1:num_vars])

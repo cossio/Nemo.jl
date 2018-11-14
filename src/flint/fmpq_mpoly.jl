@@ -611,19 +611,6 @@ end
 #
 ###############################################################################
 
-# Ensure space for n terms. Should only be required if setting coefficients or
-# terms in an unsafe manner beyond the current end of the polynomial.
-function fit!(a::fmpq_mpoly, n::Int)
-   if n > length(a)
-      for i = 1:n - length(a)
-         ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
-            (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
-         a, 0, UInt[0 for j in 1:nvars(parent(a))], a.parent)
-      end
-   end
-   return nothing
-end
-
 function addeq!(a::fmpq_mpoly, b::fmpq_mpoly)
    ccall((:fmpq_mpoly_add, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Ref{fmpq_mpoly},
@@ -638,12 +625,23 @@ function mul!(a::fmpq_mpoly, b::fmpq_mpoly, c::fmpq_mpoly)
    return a
 end
 
-# Set the i-th coefficient of a to c. If zero coefficients are inserted, they
+# Set the n-th coefficient of a to c. If zero coefficients are inserted, they
 # must be removed with combine_like_terms!
-function setcoeff!(a::fmpq_mpoly, i::Int, c::fmpq)
+function setcoeff!(a::fmpq_mpoly, n::Int, c::fmpq)
+   if n > length(a)
+      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
+      for i = 1:n - 1 - length(a)
+         ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
+               (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
+            a, 0, zero_exp, a.parent)
+      end
+      ccall((:fmpq_mpoly_pushterm_fmpq_ui, :libflint), Nothing,
+            (Ref{fmpq_mpoly}, Ref{fmpq}, Ptr{UInt}, Ref{FmpqMPolyRing}),
+         a, c, zero_exp, a.parent)
+   end
    ccall((:fmpq_mpoly_set_termcoeff_fmpq, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Int, Ref{fmpq}, Ref{FmpqMPolyRing}),
-         a, i - 1, c, a.parent)
+         a, n - 1, c, a.parent)
    return a
 end
 
@@ -729,32 +727,68 @@ function exponent_vectors_fmpz(a::fmpq_mpoly)
    return [exponent_vector_fmpz(a, i) for i in 1:length(a)]
 end
    
-# Set exponent of i-th term to given vector of UInt's
+# Set exponent of n-th term to given vector of UInt's
 # No sort is performed, so this is unsafe. These are promoted to fmpz's if
 # they don't fit into 31/63 bits
-function set_exponent_vector!(a::fmpq_mpoly, i::Int, exps::Vector{UInt})
+function set_exponent_vector!(a::fmpq_mpoly, n::Int, exps::Vector{UInt})
+   if n > length(a)
+      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
+      for i = 1:n - 1 - length(a)
+         ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
+               (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
+            a, 0, zero_exp, a.parent)
+      end
+      ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
+            (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
+        a, 0, exps, a.parent)
+      return a
+   end   
    ccall((:fmpq_mpoly_set_termexp_ui, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
-      a, i - 1, exps, parent(a))
+      a, n - 1, exps, parent(a))
    return a
 end
    
-# Set exponent of i-th term to given vector of Int's
+# Set exponent of n-th term to given vector of Int's
 # No sort is performed, so this is unsafe. The Int's must be positive, but
 # no check is performed
-function set_exponent_vector!(a::fmpq_mpoly, i::Int, exps::Vector{Int})
+function set_exponent_vector!(a::fmpq_mpoly, n::Int, exps::Vector{Int})
+   if n > length(a)
+      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
+      for i = 1:n - 1 - length(a)
+         ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
+               (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
+            a, 0, zero_exp, a.parent)
+      end
+      ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
+            (Ref{fmpq_mpoly}, Int, Ptr{Int}, Ref{FmpqMPolyRing}),
+        a, 0, exps, a.parent)
+      return a
+   end  
    ccall((:fmpq_mpoly_set_termexp_ui, :libflint), Nothing,
          (Ref{fmpq_mpoly}, Int, Ptr{Int}, Ref{FmpqMPolyRing}),
-      a, i - 1, exps, parent(a))
+      a, n - 1, exps, parent(a))
    return a
 end
    
-# Set exponent of i-th term to given vector of fmpz's
+# Set exponent of n-th term to given vector of fmpz's
 # No sort is performed, so this is unsafe
-function set_exponent_vector!(a::fmpq_mpoly, i::Int, exps::Vector{fmpz})
-   ccall((:fmpq_mpoly_set_termexp_fmpz, :libflint), Nothing,
-         (Ref{fmpq_mpoly}, Int, Ptr{Ref{fmpz}}, Ref{FmpqMPolyRing}),
-      a, i - 1, exps, parent(a))
+function set_exponent_vector!(a::fmpq_mpoly, n::Int, exps::Vector{fmpz})
+   if n > length(a)
+      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
+      for i = 1:n - 1 - length(a)
+         ccall((:fmpq_mpoly_pushterm_si_ui, :libflint), Nothing,
+               (Ref{fmpq_mpoly}, Int, Ptr{UInt}, Ref{FmpqMPolyRing}),
+            a, 0, zero_exp, a.parent)
+      end
+      @GC.preserve exps ccall((:fmpq_mpoly_pushterm_si_fmpz, :libflint), Nothing,
+            (Ref{fmpq_mpoly}, Int, Ptr{fmpz}, Ref{FmpqMPolyRing}),
+         a, 0, exps, a.parent)
+      return a
+   end  
+   @GC.preserve exps ccall((:fmpq_mpoly_set_termexp_fmpz, :libflint), Nothing,
+         (Ref{fmpq_mpoly}, Int, Ptr{fmpz}, Ref{FmpqMPolyRing}),
+      a, n - 1, exps, parent(a))
    return a
 end
 
