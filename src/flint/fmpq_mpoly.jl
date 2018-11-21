@@ -467,6 +467,8 @@ function ==(a::fmpq_mpoly, b::fmpz)
                      a, b, a.parent))
 end
 
+==(a::fmpz, b::fmpq_mpoly) = b == a
+
 function ==(a::fmpq_mpoly, b::Int)
    return Bool(ccall((:fmpq_mpoly_equal_si, :libflint), Cint,
                (Ref{fmpq_mpoly}, Int, Ref{FmpqMPolyRing}),
