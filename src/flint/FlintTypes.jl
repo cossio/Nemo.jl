@@ -1065,7 +1065,7 @@ mutable struct fmpz_mpoly <: MPolyElem{fmpz}
       finalizer(_fmpz_mpoly_clear_fn, z)
 
       for i in 1:length(a)
-         ccall((:fmpz_mpoly_pushterm_fmpz_ui, :libflint), Nothing,
+         ccall((:fmpz_mpoly_push_term_fmpz_ui, :libflint), Nothing,
                (Ref{fmpz_mpoly}, Ref{fmpz}, Ptr{UInt}, Ref{FmpzMPolyRing}),
                z, a[i], b[i], ctx)
        end
@@ -1085,7 +1085,7 @@ mutable struct fmpz_mpoly <: MPolyElem{fmpz}
       finalizer(_fmpz_mpoly_clear_fn, z)
 
       for i in 1:length(a)
-         ccall((:fmpz_mpoly_pushterm_fmpz_ui, :libflint), Nothing,
+         ccall((:fmpz_mpoly_push_term_fmpz_ui, :libflint), Nothing,
                (Ref{fmpz_mpoly}, Ref{fmpz}, Ptr{Int}, Ref{FmpzMPolyRing}),
                z, a[i], b[i], ctx)
        end
@@ -1105,7 +1105,7 @@ mutable struct fmpz_mpoly <: MPolyElem{fmpz}
       finalizer(_fmpz_mpoly_clear_fn, z)
 
       for i in 1:length(a)
-         ccall((:fmpz_mpoly_pushterm_fmpz_fmpz, :libflint), Nothing,
+         ccall((:fmpz_mpoly_push_term_fmpz_fmpz, :libflint), Nothing,
                (Ref{fmpz_mpoly}, Ref{fmpz}, Ptr{Ref{fmpz}}, Ref{FmpzMPolyRing}),
                z, a[i], b[i], ctx)
        end
@@ -1240,7 +1240,7 @@ mutable struct fmpq_mpoly <: MPolyElem{fmpq}
       finalizer(_fmpq_mpoly_clear_fn, z)
 
       for i in 1:length(a)
-        ccall((:fmpq_mpoly_pushterm_fmpq_ui, :libflint), Nothing,
+        ccall((:fmpq_mpoly_push_term_fmpq_ui, :libflint), Nothing,
               (Ref{fmpq_mpoly}, Ref{fmpq}, Ptr{UInt}, Ref{FmpqMPolyRing}),
               z, a[i], b[i], ctx)
       end
@@ -1260,7 +1260,7 @@ mutable struct fmpq_mpoly <: MPolyElem{fmpq}
       finalizer(_fmpq_mpoly_clear_fn, z)
 
       for i in 1:length(a)
-        ccall((:fmpq_mpoly_pushterm_fmpq_ui, :libflint), Nothing,
+        ccall((:fmpq_mpoly_push_term_fmpq_ui, :libflint), Nothing,
               (Ref{fmpq_mpoly}, Ref{fmpq}, Ptr{UInt}, Ref{FmpqMPolyRing}),
               z, a[i], UInt(b[i]), ctx)
       end
@@ -1280,7 +1280,7 @@ mutable struct fmpq_mpoly <: MPolyElem{fmpq}
       finalizer(_fmpq_mpoly_clear_fn, z)
 
       for i in 1:length(a)
-        ccall((:fmpq_mpoly_pushterm_fmpq_fmpz, :libflint), Nothing,
+        ccall((:fmpq_mpoly_push_term_fmpq_fmpz, :libflint), Nothing,
               (Ref{fmpq_mpoly}, Ref{fmpq}, Ptr{Ref{fmpz}}, Ref{FmpqMPolyRing}),
               z, a[i], b[i], ctx)
       end
