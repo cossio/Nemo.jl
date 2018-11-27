@@ -583,16 +583,8 @@ end
 # must be removed with combine_like_terms!
 function setcoeff!(a::fmpz_mpoly, n::Int, c::fmpz)
    if n > length(a)
-      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
-      for i = 1:n - 1 - length(a)
-         ccall((:fmpz_mpoly_push_term_si_ui, :libflint), Nothing,
-               (Ref{fmpz_mpoly}, Int, Ptr{UInt}, Ref{FmpzMPolyRing}),
-            a, 0, zero_exp, a.parent)
-      end
-      ccall((:fmpz_mpoly_push_term_fmpz_ui, :libflint), Nothing,
-            (Ref{fmpz_mpoly}, Ref{fmpz}, Ptr{UInt}, Ref{FmpzMPolyRing}),
-         a, c, zero_exp, a.parent)
-      return a
+      ccall((:fmpz_mpoly_resize, :libflint), Nothing,
+            (Ref{fmpz_mpoly}, Int, Ref{FmpzMPolyRing}), a, n, a.parent)
    end
    ccall((:fmpz_mpoly_set_term_coeff_fmpz, :libflint), Nothing,
          (Ref{fmpz_mpoly}, Int, Ref{fmpz}, Ref{FmpzMPolyRing}),
@@ -678,16 +670,8 @@ end
 # they don't fit into 31/63 bits
 function set_exponent_vector!(a::fmpz_mpoly, n::Int, exps::Vector{UInt})
    if n > length(a)
-      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
-      for i = 1:n - 1 - length(a)
-         ccall((:fmpz_mpoly_push_term_si_ui, :libflint), Nothing,
-               (Ref{fmpz_mpoly}, Int, Ptr{UInt}, Ref{FmpzMPolyRing}),
-            a, 0, zero_exp, a.parent)
-      end
-      ccall((:fmpz_mpoly_push_term_si_ui, :libflint), Nothing,
-            (Ref{fmpz_mpoly}, Int, Ptr{UInt}, Ref{FmpzMPolyRing}),
-        a, 0, exps, a.parent)
-      return a
+      ccall((:fmpz_mpoly_resize, :libflint), Nothing,
+            (Ref{fmpz_mpoly}, Int, Ref{FmpzMPolyRing}), a, n, a.parent)
    end   
    ccall((:fmpz_mpoly_set_term_exp_ui, :libflint), Nothing,
          (Ref{fmpz_mpoly}, Int, Ptr{UInt}, Ref{FmpzMPolyRing}),
@@ -700,16 +684,8 @@ end
 # no check is performed
 function set_exponent_vector!(a::fmpz_mpoly, n::Int, exps::Vector{Int})
    if n > length(a)
-      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
-      for i = 1:n - 1 - length(a)
-         ccall((:fmpz_mpoly_push_term_si_ui, :libflint), Nothing,
-               (Ref{fmpz_mpoly}, Int, Ptr{UInt}, Ref{FmpzMPolyRing}),
-            a, 0, zero_exp, a.parent)
-      end
-      ccall((:fmpz_mpoly_push_term_si_ui, :libflint), Nothing,
-            (Ref{fmpz_mpoly}, Int, Ptr{Int}, Ref{FmpzMPolyRing}),
-        a, 0, exps, a.parent)
-      return a
+      ccall((:fmpz_mpoly_resize, :libflint), Nothing,
+            (Ref{fmpz_mpoly}, Int, Ref{FmpzMPolyRing}), a, n, a.parent)
    end  
    ccall((:fmpz_mpoly_set_term_exp_ui, :libflint), Nothing,
          (Ref{fmpz_mpoly}, Int, Ptr{Int}, Ref{FmpzMPolyRing}),
@@ -721,15 +697,8 @@ end
 # No sort is performed, so this is unsafe
 function set_exponent_vector!(a::fmpz_mpoly, n::Int, exps::Vector{fmpz})
    if n > length(a)
-      zero_exp = UInt[0 for j in 1:nvars(parent(a))]
-      for i = 1:n - 1 - length(a)
-         ccall((:fmpz_mpoly_push_term_si_ui, :libflint), Nothing,
-               (Ref{fmpz_mpoly}, Int, Ptr{UInt}, Ref{FmpzMPolyRing}),
-            a, 0, zero_exp, a.parent)
-      end
-      @GC.preserve exps ccall((:fmpz_mpoly_push_term_si_fmpz, :libflint), Nothing,
-            (Ref{fmpz_mpoly}, Int, Ptr{fmpz}, Ref{FmpzMPolyRing}),
-         a, 0, exps, a.parent)
+      ccall((:fmpz_mpoly_resize, :libflint), Nothing,
+            (Ref{fmpz_mpoly}, Int, Ref{FmpzMPolyRing}), a, n, a.parent)
       return a
    end  
    @GC.preserve exps ccall((:fmpz_mpoly_set_term_exp_fmpz, :libflint), Nothing,
